@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPCB - File Pollution Complaint</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🌿 E-Pollution: MPCB Grievance System</h1>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="complaint.html" class="active">File Complaint</a>
+                <a href="track.html">Track Status</a>
+                <a href="awareness.html">Awareness</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="complaint-section">
+            <div class="container">
+                <div class="complaint-container">
+                    <div class="complaint-header">
+                        <h2>File a Pollution Complaint</h2>
+                        <p>Please provide detailed information about the pollution issue. All fields marked with * are required.</p>
+                    </div>
+
+                    <form id="complaintForm" class="complaint-form">
+                        <div class="form-group">
+                            <label for="fullName">Full Name *</label>
+                            <input type="text" id="fullName" name="fullName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email Address *</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" name="phone" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="complaintType">Type of Pollution *</label>
+                            <select id="complaintType" name="complaintType" required>
+                                <option value="">Select pollution type</option>
+                                <option value="air">Air Pollution</option>
+                                <option value="water">Water Pollution</option>
+                                <option value="land">Land Pollution</option>
+                                <option value="noise">Noise Pollution</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="location">Location/Address *</label>
+                            <input type="text" id="location" name="location" placeholder="Full address with landmark" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="pincode">Pincode *</label>
+                            <input type="text" id="pincode" name="pincode" maxlength="6" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="description">Description of Complaint *</label>
+                            <textarea id="description" name="description" rows="5" placeholder="Please provide detailed information about the pollution issue, including source, timing, and impact" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="evidence">Upload Evidence (Photo/Video)</label>
+                            <input type="file" id="evidence" name="evidence" accept="image/*,video/*">
+                            <small>Optional: Upload clear photos or videos as evidence (Max 10MB)</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" required>
+                                I confirm that the information provided is true and accurate to the best of my knowledge.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-submit">Submit Complaint</button>
+                    </form>
+
+                    <div id="successMessage" class="success-message" style="display: none;">
+                        <h3>✅ Complaint Submitted Successfully!</h3>
+                        <p>Your complaint ID is: <strong id="complaintId"></strong></p>
+                        <p>Please save this ID to track your complaint status.</p>
+                        <a href="track.html" class="btn btn-track">Track Your Complaint</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>MPCB Grievance System</h4>
+                    <p>Committed to environmental protection and sustainable development in Maharashtra.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="index.html">Home</a>
+                    <a href="complaint.html">File Complaint</a>
+                    <a href="track.html">Track Status</a>
+                    <a href="awareness.html">Awareness</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📞 Toll Free: 1800-XXX-XXXX</p>
+                    <p>📧 Email: mpcb@grievance.gov.in</p>
+                    <p>📍 Nashik, Maharashtra</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Community Project, SYBCA, KK Wagh College. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+
+       <script>
+    const API_BASE_URL = window.location.origin;
+    
+    document.getElementById('complaintForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.querySelector('.btn-submit');
+        const originalBtnText = submitBtn.textContent;
+        submitBtn.textContent = 'Submitting...';
+        submitBtn.disabled = true;
+        
+        const formData = new FormData();
+        formData.append('fullName', document.getElementById('fullName').value);
+        formData.append('email', document.getElementById('email').value);
+        formData.append('phone', document.getElementById('phone').value);
+        formData.append('complaintType', document.getElementById('complaintType').value);
+        formData.append('location', document.getElementById('location').value);
+        formData.append('pincode', document.getElementById('pincode').value);
+        formData.append('description', document.getElementById('description').value);
+        
+        const evidenceFile = document.getElementById('evidence').files[0];
+        if (evidenceFile) {
+            formData.append('evidence', evidenceFile);
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/complaint`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('complaintId').textContent = result.complaint_id;
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('complaintForm').style.display = 'none';
+                document.getElementById('successMessage').scrollIntoView({ behavior: 'smooth' });
+                localStorage.setItem('lastComplaintId', result.complaint_id);
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to submit complaint. Please try again.');
+        } finally {
+            submitBtn.textContent = originalBtnText;
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

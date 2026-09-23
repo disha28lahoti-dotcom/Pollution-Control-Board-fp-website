@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPCB - Track Complaint Status</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>🌿 E-Pollution: MPCB Grievance System</h1>
+            </div>
+            <nav>
+                <a href="index.html">Home</a>
+                <a href="complaint.html">File Complaint</a>
+                <a href="track.html" class="active">Track Status</a>
+                <a href="awareness.html">Awareness</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="track-section">
+            <div class="container">
+                <div class="track-container">
+                    <div class="track-header">
+                        <h2>Track Your Complaint Status</h2>
+                        <p>Enter your unique complaint ID to check the current status</p>
+                    </div>
+
+                    <div class="track-search">
+                        <input type="text" id="trackId" placeholder="Enter Complaint ID (e.g., MPCB1234567890)" class="track-input">
+                        <button onclick="trackComplaint()" class="btn btn-track">Track Status</button>
+                    </div>
+
+                    <div id="trackResult" class="track-result" style="display: none;">
+                        <div class="status-card">
+                            <h3>Complaint Details</h3>
+                            <div class="status-info">
+                                <p><strong>Complaint ID:</strong> <span id="resultId"></span></p>
+                                <p><strong>Type:</strong> <span id="resultType"></span></p>
+                                <p><strong>Location:</strong> <span id="resultLocation"></span></p>
+                                <p><strong>Date Filed:</strong> <span id="resultDate"></span></p>
+                                <p><strong>Current Status:</strong></p>
+                                <div class="status-progress">
+                                    <div class="status-step completed">Submitted</div>
+                                    <div class="status-step" id="stepReview">Under Review</div>
+                                    <div class="status-step" id="stepAction">Action Taken</div>
+                                    <div class="status-step" id="stepResolved">Resolved</div>
+                                </div>
+                                <div class="status-badge" id="statusBadge"></div>
+                                <p><strong>Description:</strong> <span id="resultDesc"></span></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="errorMessage" class="error-message" style="display: none;">
+                        <p>❌ Complaint ID not found. Please check your ID and try again.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>MPCB Grievance System</h4>
+                    <p>Committed to environmental protection and sustainable development in Maharashtra.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <a href="index.html">Home</a>
+                    <a href="complaint.html">File Complaint</a>
+                    <a href="track.html">Track Status</a>
+                    <a href="awareness.html">Awareness</a>
+                </div>
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <p>📞 Toll Free: 1800-XXX-XXXX</p>
+                    <p>📧 Email: mpcb@grievance.gov.in</p>
+                    <p>📍 Nashik, Maharashtra</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Community Project, SYBCA, KK Wagh College. All Rights Reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    
+      <script>
+    const API_BASE_URL = window.location.origin;
+    
+    async function trackComplaint() {
+        const complaintId = document.getElementById('trackId').value;
+        
+        if (!complaintId) {
+            alert('Please enter a complaint ID');
+            return;
+        }
+        
+        const trackBtn = document.querySelector('.btn-track');
+        const originalBtnText = trackBtn.textContent;
+        trackBtn.textContent = 'Tracking...';
+        trackBtn.disabled = true;
+        
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/complaint/${complaintId}`);
+            const result = await response.json();
+            
+            if (result.success && result.complaint) {
+                const complaint = result.complaint;
+                
+                document.getElementById('resultId').textContent = complaint.id;
+                document.getElementById('resultType').textContent = complaint.complaint_type.toUpperCase();
+                document.getElementById('resultLocation').textContent = complaint.location;
+                document.getElementById('resultDate').textContent = new Date(complaint.created_at).toLocaleString();
+                document.getElementById('resultDesc').textContent = complaint.description;
+                
+                const status = complaint.status;
+                const stepReview = document.getElementById('stepReview');
+                const stepAction = document.getElementById('stepAction');
+                const stepResolved = document.getElementById('stepResolved');
+                
+                [stepReview, stepAction, stepResolved].forEach(step => {
+                    step.classList.remove('completed');
+                });
+                
+                if (status === 'Under Review' || status === 'Action Initiated' || status === 'Resolved') {
+                    stepReview.classList.add('completed');
+                }
+                if (status === 'Action Initiated' || status === 'Resolved') {
+                    stepAction.classList.add('completed');
+                }
+                if (status === 'Resolved') {
+                    stepResolved.classList.add('completed');
+                }
+                
+                const badge = document.getElementById('statusBadge');
+                badge.textContent = status;
+                badge.className = 'status-badge';
+                
+                if (status === 'Resolved') {
+                    badge.classList.add('status-resolved');
+                } else if (status === 'Action Initiated') {
+                    badge.classList.add('status-action');
+                } else {
+                    badge.classList.add('status-pending');
+                }
+                
+                document.getElementById('trackResult').style.display = 'block';
+                document.getElementById('errorMessage').style.display = 'none';
+            } else {
+                document.getElementById('trackResult').style.display = 'none';
+                document.getElementById('errorMessage').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            document.getElementById('trackResult').style.display = 'none';
+            document.getElementById('errorMessage').style.display = 'block';
+        } finally {
+            trackBtn.textContent = originalBtnText;
+            trackBtn.disabled = false;
+        }
+    }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const complaintId = urlParams.get('id') || localStorage.getItem('lastComplaintId');
+        
+        if (complaintId) {
+            document.getElementById('trackId').value = complaintId;
+            trackComplaint();
+            localStorage.removeItem('lastComplaintId');
+        }
+    });
+</script>
+</body>
+</html>
